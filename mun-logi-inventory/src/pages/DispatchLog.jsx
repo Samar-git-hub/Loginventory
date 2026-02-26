@@ -13,7 +13,7 @@ export default function DispatchLog() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('dispatch_log')
-        .select('*, committees(name), items(name), item_name, committee_name')
+        .select('*')
         .order('dispatched_at', { ascending: false })
         .limit(300)
       if (error) throw error
@@ -96,7 +96,7 @@ export default function DispatchLog() {
       {deleteTarget && (
         <ConfirmModal
           title="Delete Record"
-          message={`Delete this dispatch record? (${deleteTarget.item_name ?? deleteTarget.items?.name ?? 'Unknown'} × ${deleteTarget.quantity} to ${deleteTarget.committee_name ?? deleteTarget.committees?.name ?? 'Unknown'})`}
+          message={`Delete this dispatch record? (${deleteTarget.item_name ?? 'Unknown'} × ${deleteTarget.quantity} to ${deleteTarget.committee_name ?? 'Unknown'})`}
           confirmLabel="Delete"
           onConfirm={() => deleteLog.mutate(deleteTarget.id)}
           onClose={() => setDeleteTarget(null)}
@@ -118,8 +118,8 @@ export default function DispatchLog() {
           <tbody>
             {logs?.map(log => (
               <tr key={log.id} className="border-b border-gray-50 hover:bg-water/20 transition-colors group">
-                <td className="px-6 py-3.5 text-gray-800 font-semibold font-montserrat text-sm">{log.committee_name ?? log.committees?.name ?? '—'}</td>
-                <td className="px-6 py-3.5 text-gray-600 font-raleway text-sm">{log.item_name ?? log.items?.name ?? '—'}</td>
+                <td className="px-6 py-3.5 text-gray-800 font-semibold font-montserrat text-sm">{log.committee_name ?? '—'}</td>
+                <td className="px-6 py-3.5 text-gray-600 font-raleway text-sm">{log.item_name ?? '—'}</td>
                 <td className="px-6 py-3.5">
                   <span className="bg-lapis/10 text-lapis px-3 py-1 rounded-full text-xs font-semibold font-montserrat">
                     {log.quantity}

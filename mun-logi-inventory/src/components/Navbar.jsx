@@ -1,9 +1,16 @@
+import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../context/AuthContext'
+import ConfirmModal from './ConfirmModal'
 
 export default function Navbar() {
   const location = useLocation()
+  const { session } = useAuth()
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState(null)
 
   const { data: committees } = useQuery({
     queryKey: ['committees'],
@@ -19,6 +26,18 @@ export default function Navbar() {
 
   async function handleSignOut() {
     await supabase.auth.signOut()
+  }
+
+  async function handleDeleteAccount() {
+    setDeleting(true)
+    setDeleteError(null)
+    const { error } = await supabase.rpc('delete_own_account')
+    if (error) {
+      setDeleteError(error.message)
+      setDeleting(false)
+    } else {
+      await supabase.auth.signOut()
+    }
   }
 
   function linkClass(path) {
@@ -66,15 +85,39 @@ export default function Navbar() {
         <p className="text-water/40 text-xs px-4 font-raleway">No committees yet.</p>
       )}
 
-      {/* Sign out */}
-      <div className="mt-auto">
+      {/* Account section */}
+      <div className="mt-auto flex flex-col gap-1">
+        <p className="text-water/40 text-[10px] px-2 mb-1 font-raleway truncate">
+          {session?.user?.email}
+        </p>
         <button
           onClick={handleSignOut}
-          className="w-full text-left px-4 py-2.5 text-water/50 hover:text-red-300 text-sm transition-colors rounded-lg hover:bg-white/5 font-raleway"
+          className="w-full text-left px-4 py-2 text-water/50 hover:text-white text-sm transition-colors rounded-lg hover:bg-white/5 font-raleway"
         >
           Sign Out
         </button>
+        <button
+          onClick={() => setShowDeleteAccount(true)}
+          className="w-full text-left px-4 py-2 text-water/30 hover:text-red-300 text-xs transition-colors rounded-lg hover:bg-white/5 font-raleway"
+        >
+          Delete Account
+        </button>
       </div>
+
+      {/* Delete Account Confirmation */}
+      {showDeleteAccount && (
+        <ConfirmModal
+          title="Delete Account"
+          message={`This will permanently delete your account (${session?.user?.email}). You will be signed out immediately. Type "DELETE" to confirm.`}
+          confirmLabel="Delete Account"
+          type="typed"
+          confirmText="DELETE"
+          placeholder='Type "DELETE" to confirm'
+          onConfirm={handleDeleteAccount}
+          onClose={() => { setShowDeleteAccount(false); setDeleteError(null) }}
+          isLoading={deleting}
+        />
+      )}
     </nav>
   )
 }
