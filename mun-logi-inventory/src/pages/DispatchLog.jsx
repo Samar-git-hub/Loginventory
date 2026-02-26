@@ -6,7 +6,6 @@ import ConfirmModal from '../components/ConfirmModal'
 export default function DispatchLog() {
   const qc = useQueryClient()
   const [showClear, setShowClear] = useState(false)
-  const [deleteTarget, setDeleteTarget] = useState(null) // single log to delete
 
   const { data: logs, isLoading } = useQuery({
     queryKey: ['dispatch_log'],
@@ -29,17 +28,6 @@ export default function DispatchLog() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['dispatch_log'] })
       setShowClear(false)
-    }
-  })
-
-  const deleteLog = useMutation({
-    mutationFn: async (logId) => {
-      const { error } = await supabase.from('dispatch_log').delete().eq('id', logId)
-      if (error) throw error
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['dispatch_log'] })
-      setDeleteTarget(null)
     }
   })
 
@@ -92,18 +80,6 @@ export default function DispatchLog() {
         />
       )}
 
-      {/* Delete single record confirmation */}
-      {deleteTarget && (
-        <ConfirmModal
-          title="Delete Record"
-          message={`Delete this dispatch record? (${deleteTarget.item_name ?? 'Unknown'} × ${deleteTarget.quantity} to ${deleteTarget.committee_name ?? 'Unknown'})`}
-          confirmLabel="Delete"
-          onConfirm={() => deleteLog.mutate(deleteTarget.id)}
-          onClose={() => setDeleteTarget(null)}
-          isLoading={deleteLog.isPending}
-        />
-      )}
-
       <div className="bg-white rounded-2xl shadow-sm overflow-x-auto">
         <table className="w-full min-w-[600px]">
           <thead>
@@ -111,32 +87,46 @@ export default function DispatchLog() {
               <th className="text-left px-6 py-3.5 text-lapis font-semibold text-xs uppercase tracking-wider font-montserrat">Committee</th>
               <th className="text-left px-6 py-3.5 text-lapis font-semibold text-xs uppercase tracking-wider font-montserrat">Item</th>
               <th className="text-left px-6 py-3.5 text-lapis font-semibold text-xs uppercase tracking-wider font-montserrat">Qty</th>
+              <th className="text-left px-6 py-3.5 text-lapis font-semibold text-xs uppercase tracking-wider font-montserrat">Status</th>
               <th className="text-left px-6 py-3.5 text-lapis font-semibold text-xs uppercase tracking-wider font-montserrat">Time</th>
-              <th className="w-10"></th>
             </tr>
           </thead>
           <tbody>
-            {logs?.map(log => (
-              <tr key={log.id} className="border-b border-gray-50 hover:bg-water/20 transition-colors group">
-                <td className="px-6 py-3.5 text-gray-800 font-semibold font-montserrat text-sm">{log.committee_name ?? '—'}</td>
-                <td className="px-6 py-3.5 text-gray-600 font-raleway text-sm">{log.item_name ?? '—'}</td>
-                <td className="px-6 py-3.5">
-                  <span className="bg-lapis/10 text-lapis px-3 py-1 rounded-full text-xs font-semibold font-montserrat">
-                    {log.quantity}
-                  </span>
-                </td>
-                <td className="px-6 py-3.5 text-gray-400 text-xs font-raleway">{formatTime(log.dispatched_at)}</td>
-                <td className="px-2 py-3.5">
-                  <button
-                    onClick={() => setDeleteTarget(log)}
-                    className="w-7 h-7 rounded-full text-gray-300 hover:text-red-500 hover:bg-red-50 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
-                    title="Delete this record"
-                  >
-                    ✕
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {logs?.map(log => {
+              const isReturn = log.quantity < 0
+              return (
+                <tr key={log.id} className={`border-b border-gray-50 hover:bg-water/20 transition-colors group ${isReturn ? 'bg-emerald-50/40' : ''}`}>
+                  <td className="px-6 py-3.5 text-gray-800 font-semibold font-montserrat text-sm">{log.committee_name ?? '—'}</td>
+                  <td className="px-6 py-3.5 text-gray-600 font-raleway text-sm">{log.item_name ?? '—'}</td>
+                  <td className="px-6 py-3.5">
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold font-montserrat ${isReturn
+                      ? 'bg-emerald-100 text-emerald-700'
+                      : 'bg-lapis/10 text-lapis'
+                      }`}>
+                      {isReturn ? `+${Math.abs(log.quantity)}` : log.quantity}
+                    </span>
+                  </td>
+                  <td className="px-6 py-3.5">
+                    {isReturn ? (
+                      <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-full text-xs font-semibold font-montserrat">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="shrink-0">
+                          <path d="M2 6L5 9L10 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        Returned
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full text-xs font-semibold font-montserrat">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="shrink-0">
+                          <path d="M6 2V10M6 10L3 7M6 10L9 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        Dispatched
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-6 py-3.5 text-gray-400 text-xs font-raleway">{formatTime(log.dispatched_at)}</td>
+                </tr>
+              )
+            })}
             {logs?.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-6 py-16 text-center text-gray-400 font-raleway">
