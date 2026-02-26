@@ -95,7 +95,7 @@ export default function CommitteePage() {
 
   return (
     <div>
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-6">
         <div>
           <h1 className="text-2xl font-bold font-montserrat text-yale">{committee?.name}</h1>
           <p className="text-gray-400 text-sm mt-1 font-raleway">
@@ -133,7 +133,7 @@ export default function CommitteePage() {
         className="w-full bg-white border border-gray-200 text-gray-800 px-5 py-3 rounded-xl mb-6 text-sm outline-none focus:border-celestial focus:ring-2 focus:ring-maya/30 shadow-sm font-raleway transition-all"
       />
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
         {filtered?.map(item => (
           <ItemCard
             key={item.id}

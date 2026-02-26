@@ -62,7 +62,7 @@ export default function DispatchLog() {
 
   return (
     <div>
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-6">
         <div>
           <h1 className="text-2xl font-bold font-montserrat text-yale">Dispatch Log</h1>
           <p className="text-gray-400 text-sm mt-1 font-raleway">Complete history of every item sent out, newest first.</p>
@@ -104,8 +104,8 @@ export default function DispatchLog() {
         />
       )}
 
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-        <table className="w-full">
+      <div className="bg-white rounded-2xl shadow-sm overflow-x-auto">
+        <table className="w-full min-w-[600px]">
           <thead>
             <tr className="border-b border-gray-100 bg-water/40">
               <th className="text-left px-6 py-3.5 text-lapis font-semibold text-xs uppercase tracking-wider font-montserrat">Committee</th>

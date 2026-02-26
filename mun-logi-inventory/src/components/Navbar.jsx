@@ -5,12 +5,11 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import ConfirmModal from './ConfirmModal'
 
-export default function Navbar() {
+export default function Navbar({ onNavigate }) {
   const location = useLocation()
   const { session } = useAuth()
   const [showDeleteAccount, setShowDeleteAccount] = useState(false)
   const [deleting, setDeleting] = useState(false)
-  const [deleteError, setDeleteError] = useState(null)
 
   const { data: committees } = useQuery({
     queryKey: ['committees'],
@@ -30,10 +29,8 @@ export default function Navbar() {
 
   async function handleDeleteAccount() {
     setDeleting(true)
-    setDeleteError(null)
     const { error } = await supabase.rpc('delete_own_account')
     if (error) {
-      setDeleteError(error.message)
       setDeleting(false)
     } else {
       await supabase.auth.signOut()
@@ -48,8 +45,12 @@ export default function Navbar() {
       }`
   }
 
+  function handleLinkClick() {
+    if (onNavigate) onNavigate()
+  }
+
   return (
-    <nav className="w-60 bg-gradient-to-b from-yale to-yale2 flex flex-col p-4 gap-1 shrink-0">
+    <nav className="w-60 h-full bg-gradient-to-b from-yale to-yale2 flex flex-col p-4 gap-1 shrink-0">
       {/* App header */}
       <div className="mb-6 px-2 pt-2">
         <h1 className="text-lg font-bold text-white font-montserrat">Logi Inventory</h1>
@@ -57,10 +58,10 @@ export default function Navbar() {
       </div>
 
       {/* Main navigation */}
-      <Link to="/" className={linkClass('/')}>
+      <Link to="/" className={linkClass('/')} onClick={handleLinkClick}>
         Main Inventory
       </Link>
-      <Link to="/log" className={linkClass('/log')}>
+      <Link to="/log" className={linkClass('/log')} onClick={handleLinkClick}>
         Dispatch Log
       </Link>
 
@@ -76,6 +77,7 @@ export default function Navbar() {
           key={c.id}
           to={`/committee/${c.id}`}
           className={linkClass(`/committee/${c.id}`)}
+          onClick={handleLinkClick}
         >
           {c.name}
         </Link>
@@ -114,7 +116,7 @@ export default function Navbar() {
           confirmText="DELETE"
           placeholder='Type "DELETE" to confirm'
           onConfirm={handleDeleteAccount}
-          onClose={() => { setShowDeleteAccount(false); setDeleteError(null) }}
+          onClose={() => setShowDeleteAccount(false)}
           isLoading={deleting}
         />
       )}

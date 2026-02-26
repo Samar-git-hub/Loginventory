@@ -100,7 +100,7 @@ export default function Dashboard() {
   return (
     <div>
       {/* Page header */}
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-6">
         <div>
           <h1 className="text-2xl font-bold font-montserrat text-yale">Main Inventory</h1>
           <p className="text-gray-400 text-sm mt-1 font-raleway">Stock in the logistics room. Click Edit to update the count.</p>
@@ -227,7 +227,7 @@ export default function Dashboard() {
       />
 
       {/* Item cards grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
         {filtered?.map(inv => (
           <ItemCard
             key={inv.id}
