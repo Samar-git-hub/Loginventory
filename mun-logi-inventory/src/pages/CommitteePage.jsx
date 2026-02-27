@@ -14,6 +14,7 @@ export default function CommitteePage() {
   const [search, setSearch] = useState('')
   const [selectedItem, setSelectedItem] = useState(null)
   const [returnItem, setReturnItem] = useState(null)
+  const [modalMode, setModalMode] = useState('dispatch') // 'dispatch' | 'return'
   const [showDeleteCommittee, setShowDeleteCommittee] = useState(false)
 
   const { data: committee } = useQuery({
@@ -54,11 +55,30 @@ export default function CommitteePage() {
   })
 
   const dispatch = useMutation({
-    mutationFn: async ({ itemId, quantity }) => {
+    mutationFn: async ({ itemId, quantity, dispatcher }) => {
       const { error } = await supabase.rpc('dispatch_item', {
         p_committee_id: committeeId,
         p_item_id: itemId,
-        p_quantity: quantity
+        p_quantity: quantity,
+        p_dispatcher: dispatcher
+      })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['committee_inventory', committeeId] })
+      qc.invalidateQueries({ queryKey: ['main_inventory'] })
+      qc.invalidateQueries({ queryKey: ['dispatch_log'] })
+      setSelectedItem(null)
+    }
+  })
+
+  const returnItem = useMutation({
+    mutationFn: async ({ itemId, quantity, dispatcher }) => {
+      const { error } = await supabase.rpc('return_item', {
+        p_committee_id: committeeId,
+        p_item_id: itemId,
+        p_quantity: quantity,
+        p_dispatcher: dispatcher
       })
       if (error) throw error
     },
@@ -103,6 +123,8 @@ export default function CommitteePage() {
     item.name.toLowerCase().includes(search.toLowerCase())
   )
 
+  const activeMutation = modalMode === 'return' ? returnItem : dispatch
+
   if (isLoading) {
     return (
       <div className="flex items-center gap-3 text-lapis font-montserrat">
@@ -119,6 +141,7 @@ export default function CommitteePage() {
           <h1 className="text-2xl font-bold font-montserrat text-yale">{committee?.name}</h1>
           <p className="text-gray-400 text-sm mt-1 font-raleway">
             Total items dispatched to this committee. Tap a card to dispatch more, or return items to inventory.
+            Items dispatched to this committee. Dispatch more or return items.
           </p>
         </div>
         <button
@@ -129,7 +152,7 @@ export default function CommitteePage() {
         </button>
       </div>
 
-      {/* Delete Committee Confirmation — must type committee name */}
+      {/* Delete Committee Confirmation */}
       {showDeleteCommittee && (
         <ConfirmModal
           title="Delete Committee"
@@ -163,6 +186,8 @@ export default function CommitteePage() {
             showLowStock={false}
             onDispatch={() => setSelectedItem(item)}
             onReturn={() => setReturnItem(item)}
+            onDispatch={() => { setSelectedItem(item); setModalMode('dispatch') }}
+            onReturn={() => { setSelectedItem(item); setModalMode('return') }}
           />
         ))}
       </div>
@@ -171,10 +196,11 @@ export default function CommitteePage() {
         <DispatchModal
           item={selectedItem}
           committeeName={committee?.name}
-          onConfirm={(qty) => dispatch.mutate({ itemId: selectedItem.id, quantity: qty })}
+          mode={modalMode}
+          onConfirm={(qty, dispatcher) => activeMutation.mutate({ itemId: selectedItem.id, quantity: qty, dispatcher })}
           onClose={() => setSelectedItem(null)}
-          isLoading={dispatch.isPending}
-          error={dispatch.error?.message}
+          isLoading={activeMutation.isPending}
+          error={activeMutation.error?.message}
         />
       )}
 
