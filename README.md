@@ -269,6 +269,42 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
+-- Return function (moves items back from a committee to main inventory)
+CREATE OR REPLACE FUNCTION return_item(
+  p_committee_id UUID,
+  p_item_id UUID,
+  p_quantity INTEGER
+) RETURNS void AS $$
+BEGIN
+  IF (SELECT quantity FROM committee_inventory
+      WHERE committee_id = p_committee_id
+        AND item_id = p_item_id
+        AND user_id = auth.uid()) < p_quantity THEN
+    RAISE EXCEPTION 'Committee does not have enough of this item to return';
+  END IF;
+
+  UPDATE main_inventory
+    SET quantity = quantity + p_quantity
+    WHERE item_id = p_item_id AND user_id = auth.uid();
+
+  UPDATE committee_inventory
+    SET quantity = quantity - p_quantity
+    WHERE committee_id = p_committee_id
+      AND item_id = p_item_id
+      AND user_id = auth.uid();
+
+  INSERT INTO dispatch_log (committee_id, item_id, quantity, item_name, committee_name)
+    VALUES (
+      p_committee_id,
+      p_item_id,
+      -p_quantity,
+      (SELECT name FROM items WHERE id = p_item_id),
+      (SELECT name FROM committees WHERE id = p_committee_id)
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+-- Account deletion (lets users delete their own account from the app)
 -- Fulfill request (requester: confirms receipt, moves to committee inventory)
 CREATE OR REPLACE FUNCTION fulfill_request(
   p_request_id UUID

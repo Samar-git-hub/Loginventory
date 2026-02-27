@@ -32,17 +32,6 @@ export default function DispatchLog() {
     }
   })
 
-  const deleteLog = useMutation({
-    mutationFn: async (logId) => {
-      const { error } = await supabase.from('dispatch_log').delete().eq('id', logId)
-      if (error) throw error
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['dispatch_log'] })
-      setDeleteTarget(null)
-    }
-  })
-
   function formatTime(ts) {
     return new Date(ts).toLocaleString('en-IN', {
       day: '2-digit', month: 'short',
@@ -106,6 +95,11 @@ export default function DispatchLog() {
         <table className="w-full min-w-[750px]">
           <thead>
             <tr className="border-b border-gray-100 bg-water/40">
+              <th className="text-left px-6 py-3.5 text-lapis font-semibold text-xs uppercase tracking-wider font-montserrat">Committee</th>
+              <th className="text-left px-6 py-3.5 text-lapis font-semibold text-xs uppercase tracking-wider font-montserrat">Item</th>
+              <th className="text-left px-6 py-3.5 text-lapis font-semibold text-xs uppercase tracking-wider font-montserrat">Qty</th>
+              <th className="text-left px-6 py-3.5 text-lapis font-semibold text-xs uppercase tracking-wider font-montserrat">Status</th>
+              <th className="text-left px-6 py-3.5 text-lapis font-semibold text-xs uppercase tracking-wider font-montserrat">Time</th>
               <th className="text-left px-5 py-3.5 text-lapis font-semibold text-xs uppercase tracking-wider font-montserrat">Action</th>
               <th className="text-left px-5 py-3.5 text-lapis font-semibold text-xs uppercase tracking-wider font-montserrat">Committee</th>
               <th className="text-left px-5 py-3.5 text-lapis font-semibold text-xs uppercase tracking-wider font-montserrat">Item</th>
@@ -117,6 +111,37 @@ export default function DispatchLog() {
           </thead>
           <tbody>
             {logs?.map(log => {
+              const isReturn = log.quantity < 0
+              return (
+                <tr key={log.id} className={`border-b border-gray-50 hover:bg-water/20 transition-colors group ${isReturn ? 'bg-emerald-50/40' : ''}`}>
+                  <td className="px-6 py-3.5 text-gray-800 font-semibold font-montserrat text-sm">{log.committee_name ?? '—'}</td>
+                  <td className="px-6 py-3.5 text-gray-600 font-raleway text-sm">{log.item_name ?? '—'}</td>
+                  <td className="px-6 py-3.5">
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold font-montserrat ${isReturn
+                      ? 'bg-emerald-100 text-emerald-700'
+                      : 'bg-lapis/10 text-lapis'
+                      }`}>
+                      {isReturn ? `+${Math.abs(log.quantity)}` : log.quantity}
+                    </span>
+                  </td>
+                  <td className="px-6 py-3.5">
+                    {isReturn ? (
+                      <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-full text-xs font-semibold font-montserrat">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="shrink-0">
+                          <path d="M2 6L5 9L10 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        Returned
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full text-xs font-semibold font-montserrat">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="shrink-0">
+                          <path d="M6 2V10M6 10L3 7M6 10L9 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        Dispatched
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-6 py-3.5 text-gray-400 text-xs font-raleway">{formatTime(log.dispatched_at)}</td>
               const isReturn = log.action_type === 'return'
               const isRequest = log.action_type === 'request'
               const pillStyle = isReturn

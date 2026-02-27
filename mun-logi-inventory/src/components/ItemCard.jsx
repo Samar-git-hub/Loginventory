@@ -68,6 +68,25 @@ export default function ItemCard({ item, quantity, onDispatch, onReturn, onUpdat
         )}
       </div>
 
+      {/* Action buttons */}
+      <div className="flex gap-2">
+        {showDispatch && (
+          <button
+            onClick={onDispatch}
+            className="flex-1 bg-lapis hover:bg-celestial active:bg-yale text-white py-2.5 rounded-lg text-xs font-semibold font-montserrat transition-colors"
+          >
+            Dispatch
+          </button>
+        )}
+        {showReturn && quantity > 0 && (
+          <button
+            onClick={onReturn}
+            className="flex-1 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white py-2.5 rounded-lg text-xs font-semibold font-montserrat transition-colors"
+          >
+            ↩ Return
+          </button>
+        )}
+      </div>
       {/* Dispatch & Return buttons */}
       {(showDispatch || showReturn) && (
         <div className="flex gap-2">
