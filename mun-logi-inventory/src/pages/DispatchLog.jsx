@@ -6,7 +6,7 @@ import ConfirmModal from '../components/ConfirmModal'
 export default function DispatchLog() {
   const qc = useQueryClient()
   const [showClear, setShowClear] = useState(false)
-  const [deleteTarget, setDeleteTarget] = useState(null) // single log to delete
+  const [deleteTarget, setDeleteTarget] = useState(null)
 
   const { data: logs, isLoading } = useQuery({
     queryKey: ['dispatch_log'],
@@ -55,7 +55,7 @@ export default function DispatchLog() {
     return (
       <div className="flex items-center gap-3 text-lapis font-montserrat">
         <div className="w-5 h-5 border-2 border-maya border-t-lapis rounded-full animate-spin"></div>
-        Loading log...
+        Loading...
       </div>
     )
   }
@@ -64,8 +64,8 @@ export default function DispatchLog() {
     <div>
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-6">
         <div>
-          <h1 className="text-2xl font-bold font-montserrat text-yale">Dispatch Log</h1>
-          <p className="text-gray-400 text-sm mt-1 font-raleway">Complete history of every item sent out, newest first.</p>
+          <h1 className="text-2xl font-bold font-montserrat text-yale">Activity Log</h1>
+          <p className="text-gray-400 text-sm mt-1 font-raleway">All dispatches, returns, and request activity.</p>
         </div>
         {logs?.length > 0 && (
           <button
@@ -77,12 +77,11 @@ export default function DispatchLog() {
         )}
       </div>
 
-      {/* Clear all logs confirmation */}
       {showClear && (
         <ConfirmModal
-          title="Clear Dispatch Log"
-          message={`This will permanently delete all ${logs?.length} dispatch records. This cannot be undone. Type "CONFIRM" below to proceed.`}
-          confirmLabel="Clear All Logs"
+          title="Clear Activity Log"
+          message={`This will permanently delete all ${logs?.length} records. Type "CONFIRM" to proceed.`}
+          confirmLabel="Clear All"
           type="typed"
           confirmText="CONFIRM"
           placeholder='Type "CONFIRM" to proceed'
@@ -92,11 +91,10 @@ export default function DispatchLog() {
         />
       )}
 
-      {/* Delete single record confirmation */}
       {deleteTarget && (
         <ConfirmModal
           title="Delete Record"
-          message={`Delete this dispatch record? (${deleteTarget.item_name ?? 'Unknown'} × ${deleteTarget.quantity} to ${deleteTarget.committee_name ?? 'Unknown'})`}
+          message={`Delete this record? (${deleteTarget.item_name ?? 'Unknown'} × ${deleteTarget.quantity} — ${deleteTarget.committee_name ?? 'Unknown'})`}
           confirmLabel="Delete"
           onConfirm={() => deleteLog.mutate(deleteTarget.id)}
           onClose={() => setDeleteTarget(null)}
@@ -105,42 +103,64 @@ export default function DispatchLog() {
       )}
 
       <div className="bg-white rounded-2xl shadow-sm overflow-x-auto">
-        <table className="w-full min-w-[600px]">
+        <table className="w-full min-w-[750px]">
           <thead>
             <tr className="border-b border-gray-100 bg-water/40">
-              <th className="text-left px-6 py-3.5 text-lapis font-semibold text-xs uppercase tracking-wider font-montserrat">Committee</th>
-              <th className="text-left px-6 py-3.5 text-lapis font-semibold text-xs uppercase tracking-wider font-montserrat">Item</th>
-              <th className="text-left px-6 py-3.5 text-lapis font-semibold text-xs uppercase tracking-wider font-montserrat">Qty</th>
-              <th className="text-left px-6 py-3.5 text-lapis font-semibold text-xs uppercase tracking-wider font-montserrat">Time</th>
+              <th className="text-left px-5 py-3.5 text-lapis font-semibold text-xs uppercase tracking-wider font-montserrat">Action</th>
+              <th className="text-left px-5 py-3.5 text-lapis font-semibold text-xs uppercase tracking-wider font-montserrat">Committee</th>
+              <th className="text-left px-5 py-3.5 text-lapis font-semibold text-xs uppercase tracking-wider font-montserrat">Item</th>
+              <th className="text-left px-5 py-3.5 text-lapis font-semibold text-xs uppercase tracking-wider font-montserrat">Qty</th>
+              <th className="text-left px-5 py-3.5 text-lapis font-semibold text-xs uppercase tracking-wider font-montserrat">Dispatcher</th>
+              <th className="text-left px-5 py-3.5 text-lapis font-semibold text-xs uppercase tracking-wider font-montserrat">Time</th>
               <th className="w-10"></th>
             </tr>
           </thead>
           <tbody>
-            {logs?.map(log => (
-              <tr key={log.id} className="border-b border-gray-50 hover:bg-water/20 transition-colors group">
-                <td className="px-6 py-3.5 text-gray-800 font-semibold font-montserrat text-sm">{log.committee_name ?? '—'}</td>
-                <td className="px-6 py-3.5 text-gray-600 font-raleway text-sm">{log.item_name ?? '—'}</td>
-                <td className="px-6 py-3.5">
-                  <span className="bg-lapis/10 text-lapis px-3 py-1 rounded-full text-xs font-semibold font-montserrat">
-                    {log.quantity}
-                  </span>
-                </td>
-                <td className="px-6 py-3.5 text-gray-400 text-xs font-raleway">{formatTime(log.dispatched_at)}</td>
-                <td className="px-2 py-3.5">
-                  <button
-                    onClick={() => setDeleteTarget(log)}
-                    className="w-7 h-7 rounded-full text-gray-300 hover:text-red-500 hover:bg-red-50 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
-                    title="Delete this record"
-                  >
-                    ✕
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {logs?.map(log => {
+              const isReturn = log.action_type === 'return'
+              const isRequest = log.action_type === 'request'
+              const pillStyle = isReturn
+                ? 'bg-rose-100 text-rose-600'
+                : isRequest
+                  ? 'bg-blue-100 text-blue-600'
+                  : 'bg-emerald-100 text-emerald-600'
+              const qtyStyle = isReturn
+                ? 'bg-rose-100 text-rose-600'
+                : 'bg-emerald-100 text-emerald-600'
+              const label = isReturn ? 'Return' : isRequest ? 'Request' : 'Dispatch'
+
+              return (
+                <tr key={log.id} className="border-b border-gray-50 hover:bg-water/20 transition-colors group">
+                  <td className="px-5 py-3.5">
+                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide font-montserrat ${pillStyle}`}>
+                      {label}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3.5 text-gray-800 font-semibold font-montserrat text-sm">{log.committee_name ?? '—'}</td>
+                  <td className="px-5 py-3.5 text-gray-600 font-raleway text-sm">{log.item_name ?? '—'}</td>
+                  <td className="px-5 py-3.5">
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold font-montserrat ${qtyStyle}`}>
+                      {isReturn ? '+' : ''}{log.quantity}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3.5 text-gray-500 font-raleway text-sm">{log.dispatcher_name ?? '—'}</td>
+                  <td className="px-5 py-3.5 text-gray-400 text-xs font-raleway">{formatTime(log.dispatched_at)}</td>
+                  <td className="px-2 py-3.5">
+                    <button
+                      onClick={() => setDeleteTarget(log)}
+                      className="w-7 h-7 rounded-full text-gray-300 hover:text-red-500 hover:bg-red-50 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+                      title="Delete this record"
+                    >
+                      ✕
+                    </button>
+                  </td>
+                </tr>
+              )
+            })}
             {logs?.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-6 py-16 text-center text-gray-400 font-raleway">
-                  No dispatches recorded yet.
+                <td colSpan={7} className="px-5 py-16 text-center text-gray-400 font-raleway">
+                  No activity recorded yet.
                 </td>
               </tr>
             )}

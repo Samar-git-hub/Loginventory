@@ -1,18 +1,20 @@
 import { useState } from 'react'
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import Login from './pages/Login'
+import RoleSelect from './pages/RoleSelect'
 import Dashboard from './pages/Dashboard'
 import CommitteePage from './pages/CommitteePage'
 import DispatchLog from './pages/DispatchLog'
+import Requests from './pages/Requests'
+import Transit from './pages/Transit'
+import RequesterDashboard from './pages/RequesterDashboard'
+import RequesterInventory from './pages/RequesterInventory'
 import Navbar from './components/Navbar'
 
 export default function App() {
-  const { session, loading } = useAuth()
+  const { session, loading, role } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
-  const location = useLocation()
-
-  // Close menu on route change
   const closeMenu = () => setMenuOpen(false)
 
   if (loading) {
@@ -27,10 +29,11 @@ export default function App() {
   }
 
   if (!session) return <Login />
+  if (!role) return <RoleSelect />
 
   return (
     <div className="flex h-screen bg-[#F0F8FF] text-gray-800 overflow-hidden">
-      {/* Mobile hamburger button */}
+      {/* Mobile hamburger */}
       <button
         onClick={() => setMenuOpen(true)}
         className="fixed top-4 left-4 z-40 md:hidden w-10 h-10 bg-yale text-white rounded-lg flex items-center justify-center shadow-lg"
@@ -40,28 +43,35 @@ export default function App() {
         </svg>
       </button>
 
-      {/* Sidebar — always visible on md+, overlay on mobile */}
+      {/* Sidebar */}
       <div className={`
         fixed inset-0 z-50 md:relative md:inset-auto
         ${menuOpen ? 'block' : 'hidden'} md:block
       `}>
-        {/* Backdrop on mobile */}
-        <div
-          className="absolute inset-0 bg-black/40 md:hidden"
-          onClick={closeMenu}
-        />
+        <div className="absolute inset-0 bg-black/40 md:hidden" onClick={closeMenu} />
         <div className="relative z-10 h-full">
           <Navbar onNavigate={closeMenu} />
         </div>
       </div>
 
       <main className="flex-1 overflow-auto p-4 pt-16 md:p-8 md:pt-8">
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/committee/:committeeId" element={<CommitteePage />} />
-          <Route path="/log" element={<DispatchLog />} />
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
+        {role === 'admin' ? (
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/committee/:committeeId" element={<CommitteePage />} />
+            <Route path="/log" element={<DispatchLog />} />
+            <Route path="/requests" element={<Requests />} />
+            <Route path="/transit" element={<Transit />} />
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
+        ) : (
+          <Routes>
+            <Route path="/" element={<RequesterDashboard />} />
+            <Route path="/inventory" element={<RequesterInventory />} />
+            <Route path="/transit" element={<Transit />} />
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
+        )}
       </main>
     </div>
   )

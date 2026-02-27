@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-export default function ItemCard({ item, quantity, onDispatch, onUpdateQuantity, onDelete, showDispatch, showEdit, showDelete, showLowStock = true }) {
+export default function ItemCard({ item, quantity, onDispatch, onReturn, onUpdateQuantity, onDelete, showDispatch, showReturn, showEdit, showDelete, showLowStock = true }) {
   const [editing, setEditing] = useState(false)
   const [editVal, setEditVal] = useState(quantity)
 
@@ -68,14 +68,26 @@ export default function ItemCard({ item, quantity, onDispatch, onUpdateQuantity,
         )}
       </div>
 
-      {/* Dispatch button */}
-      {showDispatch && (
-        <button
-          onClick={onDispatch}
-          className="w-full bg-lapis hover:bg-celestial active:bg-yale text-white py-2.5 rounded-lg text-xs font-semibold font-montserrat transition-colors"
-        >
-          Dispatch
-        </button>
+      {/* Dispatch & Return buttons */}
+      {(showDispatch || showReturn) && (
+        <div className="flex gap-2">
+          {showDispatch && (
+            <button
+              onClick={onDispatch}
+              className="flex-1 bg-lapis hover:bg-celestial active:bg-yale text-white py-2.5 rounded-lg text-xs font-semibold font-montserrat transition-colors"
+            >
+              Dispatch
+            </button>
+          )}
+          {showReturn && quantity > 0 && (
+            <button
+              onClick={onReturn}
+              className="flex-1 bg-white border border-celestial text-celestial hover:bg-celestial hover:text-white py-2.5 rounded-lg text-xs font-semibold font-montserrat transition-colors"
+            >
+              Return
+            </button>
+          )}
+        </div>
       )}
     </div>
   )
