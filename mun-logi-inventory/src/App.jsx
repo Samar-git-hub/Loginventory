@@ -54,25 +54,28 @@ export default function App() {
         </div>
       </div>
 
-      <main className="flex-1 overflow-auto p-4 pt-16 md:p-8 md:pt-8">
-        {role === 'admin' ? (
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/committee/:committeeId" element={<CommitteePage />} />
-            <Route path="/log" element={<DispatchLog />} />
-            <Route path="/requests" element={<Requests />} />
-            <Route path="/transit" element={<Transit />} />
-            <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
-        ) : (
-          <Routes>
-            <Route path="/" element={<RequesterDashboard />} />
-            <Route path="/inventory" element={<RequesterInventory />} />
-            <Route path="/transit" element={<Transit />} />
-            <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
-        )}
-      </main>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <main className="flex-1 overflow-auto p-4 pt-16 md:p-8 md:pt-8">
+          {role === 'admin' ? (
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/committee/:committeeId" element={<CommitteePage />} />
+              <Route path="/log" element={<DispatchLog />} />
+              <Route path="/requests" element={<Requests />} />
+              <Route path="/transit" element={<Transit />} />
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          ) : (
+            <Routes>
+              <Route path="/" element={<RequesterDashboard />} />
+              <Route path="/inventory" element={<RequesterInventory />} />
+              <Route path="/transit" element={<Transit />} />
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          )}
+        </main>
+        <p className="text-center text-black text-xs font-raleway py-3 shrink-0">Made with <span className="text-red-500">❤️</span> by Tech</p>
+      </div>
     </div>
   )
 }

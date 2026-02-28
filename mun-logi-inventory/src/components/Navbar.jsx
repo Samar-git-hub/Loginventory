@@ -66,8 +66,9 @@ export default function Navbar({ onNavigate }) {
   return (
     <nav className="w-60 h-full bg-gradient-to-b from-yale to-yale2 flex flex-col shrink-0">
       {/* Top section: header + main nav (fixed) */}
-      <div className="p-4 pb-0">
-        <div className="mb-6 px-2 pt-2">
+      <div className="p-4 pb-0 pt-8">
+        <div className="mb-6 px-2 pt-2 flex flex-col items-center text-center">
+          <img src="/munsoc_logo.webp" alt="MUNSoc" className="w-16 object-contain opacity-90 mb-3" />
           <h1 className="text-lg font-bold text-white font-montserrat">Logi Inventory</h1>
           <p className="text-maya/60 text-xs mt-0.5 font-raleway">
             {role === 'admin' ? 'Admin Panel' : 'Requester Panel'}
