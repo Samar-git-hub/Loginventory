@@ -185,7 +185,7 @@ export default function Requests() {
                                             Send Runner
                                         </button>
                                     )}
-                                    {req.status === 'dispatched' && (
+                                    {(req.status === 'dispatched' || req.status === 'fulfilled') && (
                                         <span className="text-gray-400 text-xs font-raleway">{req.dispatcher_name}</span>
                                     )}
                                 </td>
