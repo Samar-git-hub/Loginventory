@@ -158,12 +158,14 @@ export default function Navbar({ onNavigate }) {
           >
             Sign Out
           </button>
-          <button
-            onClick={() => setShowDeleteAccount(true)}
-            className="w-full text-left px-4 py-2 text-water/30 hover:text-red-300 text-xs transition-colors rounded-lg hover:bg-white/5 font-raleway"
-          >
-            Delete Account
-          </button>
+          {role === 'admin' && (
+            <button
+              onClick={() => setShowDeleteAccount(true)}
+              className="w-full text-left px-4 py-2 text-water/30 hover:text-red-300 text-xs transition-colors rounded-lg hover:bg-white/5 font-raleway"
+            >
+              Delete Account
+            </button>
+          )}
         </div>
       </div>
 
