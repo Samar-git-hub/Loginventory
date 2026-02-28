@@ -49,7 +49,14 @@ export default function Requests() {
         })
     }
 
-    function statusPill(status) {
+    function statusPill(status, isReRequest) {
+        if (isReRequest && status === 'requested') {
+            return (
+                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide font-montserrat bg-purple-100 text-purple-700">
+                    Re-Request
+                </span>
+            )
+        }
         const styles = {
             requested: 'bg-amber-100 text-amber-700',
             dispatched: 'bg-blue-100 text-blue-700',
@@ -158,39 +165,43 @@ export default function Requests() {
                         </tr>
                     </thead>
                     <tbody>
-                        {requests?.map(req => (
-                            <tr key={req.id} className={`border-b border-gray-50 transition-colors ${req.status === 'requested' ? 'bg-amber-50/40' : 'hover:bg-water/20'}`}>
-                                <td className="px-5 py-3.5">{statusPill(req.status)}</td>
-                                <td className="px-5 py-3.5 text-gray-800 font-semibold font-montserrat text-sm">{req.committee_name ?? '—'}</td>
-                                <td className="px-5 py-3.5 text-gray-600 font-raleway text-sm">
-                                    {req.item_name === 'Note'
-                                        ? <span className="italic text-gray-500">{req.note || '—'}</span>
-                                        : (req.item_name ?? '—')
-                                    }
-                                </td>
-                                <td className="px-5 py-3.5">
-                                    {req.item_name === 'Note'
-                                        ? <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase font-montserrat">Note</span>
-                                        : <span className="bg-lapis/10 text-lapis px-3 py-1 rounded-full text-xs font-semibold font-montserrat">{req.quantity}</span>
-                                    }
-                                </td>
-                                <td className="px-5 py-3.5 text-gray-500 font-raleway text-sm">{req.requester_name ?? '—'}</td>
-                                <td className="px-5 py-3.5 text-gray-400 text-xs font-raleway">{formatTime(req.created_at)}</td>
-                                <td className="px-5 py-3.5">
-                                    {req.status === 'requested' && (
-                                        <button
-                                            onClick={() => setDispatchTarget(req)}
-                                            className="bg-lapis hover:bg-celestial text-white px-3 py-2 rounded-lg text-xs font-semibold font-montserrat transition-colors whitespace-nowrap"
-                                        >
-                                            Send Runner
-                                        </button>
-                                    )}
-                                    {(req.status === 'dispatched' || req.status === 'fulfilled') && (
-                                        <span className="text-gray-400 text-xs font-raleway">{req.dispatcher_name}</span>
-                                    )}
-                                </td>
-                            </tr>
-                        ))}
+                        {requests?.filter(r => r.status !== 'cancelled').map(req => {
+                            const isReRequest = req.note?.startsWith('[RE-REQUEST]')
+                            const displayNote = isReRequest ? req.note.replace('[RE-REQUEST] ', '').replace('[RE-REQUEST]', '') : req.note
+                            return (
+                                <tr key={req.id} className={`border-b border-gray-50 transition-colors ${isReRequest && req.status === 'requested' ? 'bg-purple-50/40' : req.status === 'requested' ? 'bg-amber-50/40' : 'hover:bg-water/20'}`}>
+                                    <td className="px-5 py-3.5">{statusPill(req.status, isReRequest)}</td>
+                                    <td className="px-5 py-3.5 text-gray-800 font-semibold font-montserrat text-sm">{req.committee_name ?? '—'}</td>
+                                    <td className="px-5 py-3.5 text-gray-600 font-raleway text-sm">
+                                        {req.item_name === 'Note'
+                                            ? <span className="italic text-gray-500">{displayNote || '—'}</span>
+                                            : (req.item_name ?? '—')
+                                        }
+                                    </td>
+                                    <td className="px-5 py-3.5">
+                                        {req.item_name === 'Note'
+                                            ? <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase font-montserrat">Note</span>
+                                            : <span className="bg-lapis/10 text-lapis px-3 py-1 rounded-full text-xs font-semibold font-montserrat">{req.quantity}</span>
+                                        }
+                                    </td>
+                                    <td className="px-5 py-3.5 text-gray-500 font-raleway text-sm">{req.requester_name ?? '—'}</td>
+                                    <td className="px-5 py-3.5 text-gray-400 text-xs font-raleway">{formatTime(req.created_at)}</td>
+                                    <td className="px-5 py-3.5">
+                                        {req.status === 'requested' && (
+                                            <button
+                                                onClick={() => setDispatchTarget(req)}
+                                                className="bg-lapis hover:bg-celestial text-white px-3 py-2 rounded-lg text-xs font-semibold font-montserrat transition-colors whitespace-nowrap"
+                                            >
+                                                Send Runner
+                                            </button>
+                                        )}
+                                        {(req.status === 'dispatched' || req.status === 'fulfilled') && (
+                                            <span className="text-gray-400 text-xs font-raleway">{req.dispatcher_name}</span>
+                                        )}
+                                    </td>
+                                </tr>
+                            )
+                        })}
                         {requests?.length === 0 && (
                             <tr>
                                 <td colSpan={7} className="px-5 py-16 text-center text-gray-400 font-raleway">

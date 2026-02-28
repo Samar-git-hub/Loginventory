@@ -61,6 +61,33 @@ export default function RequesterDashboard() {
         }
     })
 
+    const reRequest = useMutation({
+        mutationFn: async (req) => {
+            // Cancel the old request
+            const { error: cancelErr } = await supabase
+                .from('requests')
+                .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+                .eq('id', req.id)
+            if (cancelErr) throw cancelErr
+
+            // Create a fresh one
+            const { error } = await supabase.from('requests').insert({
+                committee_id: req.committee_id,
+                item_id: req.item_id,
+                quantity: req.quantity,
+                requester_name: req.requester_name,
+                note: '[RE-REQUEST] ' + (req.note || ''),
+                status: 'requested',
+                item_name: req.item_name,
+                committee_name: req.committee_name
+            })
+            if (error) throw error
+        },
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['my_requests'] })
+        }
+    })
+
     function formatTime(ts) {
         return new Date(ts).toLocaleString('en-IN', {
             day: '2-digit', month: 'short',
@@ -73,12 +100,14 @@ export default function RequesterDashboard() {
         const styles = {
             requested: 'bg-amber-100 text-amber-700',
             dispatched: 'bg-blue-100 text-blue-700',
-            fulfilled: 'bg-emerald-100 text-emerald-700'
+            fulfilled: 'bg-emerald-100 text-emerald-700',
+            cancelled: 'bg-gray-100 text-gray-400'
         }
         const labels = {
             requested: 'Pending',
             dispatched: 'Runner On The Way',
-            fulfilled: 'Fulfilled'
+            fulfilled: 'Fulfilled',
+            cancelled: 'Cancelled'
         }
         return (
             <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide font-montserrat ${styles[status] || ''}`}>
@@ -159,7 +188,7 @@ export default function RequesterDashboard() {
 
             {/* Requests list */}
             <div className="space-y-3">
-                {requests?.map(req => {
+                {requests?.filter(r => r.status !== 'cancelled').map(req => {
                     const isNote = req.item_name === 'Note'
                     return (
                         <div key={req.id} className={`bg-white rounded-xl p-5 border shadow-sm ${req.status === 'dispatched' ? 'border-blue-200 border-l-4 border-l-celestial' :
@@ -188,14 +217,25 @@ export default function RequesterDashboard() {
                                         {req.dispatcher_name && <span> — Runner: <span className="text-gray-600 font-semibold">{req.dispatcher_name}</span></span>}
                                     </p>
                                 </div>
-                                {req.status === 'dispatched' && (
-                                    <button
-                                        onClick={() => setFulfillTarget(req)}
-                                        className="bg-amber-100 hover:bg-amber-200 text-amber-700 px-4 py-2 rounded-lg text-xs font-semibold font-montserrat transition-colors shrink-0"
-                                    >
-                                        Confirm Receipt
-                                    </button>
-                                )}
+                                <div className="flex flex-col gap-2 shrink-0 items-end">
+                                    {req.status === 'dispatched' && (
+                                        <button
+                                            onClick={() => setFulfillTarget(req)}
+                                            className="bg-amber-100 hover:bg-amber-200 text-amber-700 px-4 py-2 rounded-lg text-xs font-semibold font-montserrat transition-colors"
+                                        >
+                                            Confirm Receipt
+                                        </button>
+                                    )}
+                                    {req.status !== 'fulfilled' && (Date.now() - new Date(req.created_at).getTime()) > 15 * 60 * 1000 && (
+                                        <button
+                                            onClick={() => reRequest.mutate(req)}
+                                            disabled={reRequest.isPending}
+                                            className="bg-purple-50 hover:bg-purple-100 text-purple-500 px-4 py-2 rounded-lg text-[10px] font-semibold font-montserrat transition-colors"
+                                        >
+                                            {reRequest.isPending ? 'Sending...' : 'Re-Request'}
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     )
