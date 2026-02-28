@@ -44,7 +44,7 @@ export default function DispatchModal({ item, committeeName, mode = 'dispatch', 
         {/* Dispatcher name */}
         <input
           type="text"
-          placeholder="Dispatcher name (who is carrying)"
+          placeholder="Runner name (who is carrying)"
           value={dispatcher}
           onChange={e => setDispatcher(e.target.value)}
           className="w-full bg-gray-50 border border-gray-200 text-gray-800 px-4 py-3 rounded-lg mb-4 text-sm outline-none focus:border-celestial focus:ring-2 focus:ring-maya/30 font-raleway"

@@ -2,7 +2,7 @@
 
 A logistics inventory management system for MUN Society. Built with React, Vite, Tailwind CSS, and Supabase.
 
-Two roles: Admin (inventory team) manages stock, dispatches runners. Requester (floor in-charges) makes item requests, tracks delivery.
+Two roles: Admin (inventory team) manages stock, dispatches runners. Requester (floor in-charges) makes item requests or sends notes, tracks delivery.
 
 ## Prerequisites
 
@@ -43,6 +43,36 @@ npm run dev
 ```
 
 The app will be available at `http://localhost:5173`.
+
+## Drop Everything (if resetting)
+
+Run this first to clear all tables and functions before re-creating:
+
+```sql
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+DROP FUNCTION IF EXISTS create_default_inventory() CASCADE;
+DROP FUNCTION IF EXISTS dispatch_item(UUID, UUID, INTEGER, TEXT);
+DROP FUNCTION IF EXISTS return_item(UUID, UUID, INTEGER, TEXT);
+DROP FUNCTION IF EXISTS dispatch_request(UUID, TEXT);
+DROP FUNCTION IF EXISTS fulfill_request(UUID);
+DROP FUNCTION IF EXISTS delete_own_account();
+DROP POLICY IF EXISTS "User owns data" ON requests;
+DROP POLICY IF EXISTS "User owns profile" ON profiles;
+DROP POLICY IF EXISTS "User owns data" ON dispatch_log;
+DROP POLICY IF EXISTS "User owns data" ON committee_inventory;
+DROP POLICY IF EXISTS "User owns data" ON committees;
+DROP POLICY IF EXISTS "User owns data" ON main_inventory;
+DROP POLICY IF EXISTS "User owns data" ON items;
+DROP TABLE IF EXISTS requests;
+DROP TABLE IF EXISTS profiles;
+DROP TABLE IF EXISTS dispatch_log;
+DROP TABLE IF EXISTS committee_inventory;
+DROP TABLE IF EXISTS main_inventory;
+DROP TABLE IF EXISTS committees;
+DROP TABLE IF EXISTS items;
+```
+
+Then clear users in Authentication, and run the full SQL below.
 
 ## Supabase SQL
 
@@ -236,7 +266,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
--- Dispatch request (admin: sends runner, deducts from main inventory)
+-- Dispatch request (admin: sends runner, deducts from main inventory for item requests)
 CREATE OR REPLACE FUNCTION dispatch_request(
   p_request_id UUID,
   p_dispatcher TEXT
@@ -248,28 +278,31 @@ BEGIN
   IF NOT FOUND THEN RAISE EXCEPTION 'Request not found'; END IF;
   IF req.status != 'requested' THEN RAISE EXCEPTION 'Request already processed'; END IF;
 
-  IF (SELECT quantity FROM main_inventory WHERE item_id = req.item_id AND user_id = auth.uid()) < req.quantity THEN
-    RAISE EXCEPTION 'Insufficient stock in main inventory';
-  END IF;
+  -- Only deduct inventory for item requests (not note-only)
+  IF req.item_id IS NOT NULL THEN
+    IF (SELECT quantity FROM main_inventory WHERE item_id = req.item_id AND user_id = auth.uid()) < req.quantity THEN
+      RAISE EXCEPTION 'Insufficient stock in main inventory';
+    END IF;
 
-  UPDATE main_inventory
-    SET quantity = quantity - req.quantity
-    WHERE item_id = req.item_id AND user_id = auth.uid();
+    UPDATE main_inventory
+      SET quantity = quantity - req.quantity
+      WHERE item_id = req.item_id AND user_id = auth.uid();
+  END IF;
 
   UPDATE requests
     SET status = 'dispatched', dispatcher_name = p_dispatcher, updated_at = now()
     WHERE id = p_request_id;
 
-  INSERT INTO dispatch_log (committee_id, item_id, quantity, item_name, committee_name, dispatcher_name, action_type)
+  INSERT INTO dispatch_log (committee_id, item_id, quantity, item_name, committee_name, dispatcher_name, action_type, note)
     VALUES (
       req.committee_id, req.item_id, req.quantity,
       req.item_name, req.committee_name,
-      p_dispatcher, 'request'
+      p_dispatcher, 'request', req.note
     );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
--- Fulfill request (requester: confirms receipt, moves to committee inventory)
+-- Fulfill request (requester: confirms receipt, moves to committee inventory for item requests)
 CREATE OR REPLACE FUNCTION fulfill_request(
   p_request_id UUID
 ) RETURNS void AS $$
@@ -280,10 +313,13 @@ BEGIN
   IF NOT FOUND THEN RAISE EXCEPTION 'Request not found'; END IF;
   IF req.status != 'dispatched' THEN RAISE EXCEPTION 'Request not in dispatched state'; END IF;
 
-  INSERT INTO committee_inventory (committee_id, item_id, quantity)
-    VALUES (req.committee_id, req.item_id, req.quantity)
-    ON CONFLICT (committee_id, item_id, user_id)
-    DO UPDATE SET quantity = committee_inventory.quantity + req.quantity;
+  -- Only add to committee inventory for item requests (not note-only)
+  IF req.item_id IS NOT NULL THEN
+    INSERT INTO committee_inventory (committee_id, item_id, quantity)
+      VALUES (req.committee_id, req.item_id, req.quantity)
+      ON CONFLICT (committee_id, item_id, user_id)
+      DO UPDATE SET quantity = committee_inventory.quantity + req.quantity;
+  END IF;
 
   UPDATE requests
     SET status = 'fulfilled', updated_at = now()

@@ -49,21 +49,14 @@ export default function Transit() {
                         const isNote = req.item_name === 'Note'
                         return (
                             <div key={req.id} className="bg-white rounded-xl p-5 border border-blue-100 border-l-4 border-l-celestial shadow-sm">
-                                {isNote ? (
-                                    <>
-                                        <p className="text-gray-500 text-xs font-semibold uppercase font-montserrat tracking-wide">Note Request</p>
-                                        <p className="text-gray-800 font-medium text-sm font-raleway mt-1 italic">"{req.note}"</p>
-                                    </>
-                                ) : (
-                                    <p className="text-gray-800 font-semibold text-sm font-montserrat">{req.item_name ?? '—'}</p>
-                                )}
+                                <p className="text-gray-800 font-semibold text-sm font-montserrat">{isNote ? req.note : (req.item_name ?? '—')}</p>
                                 <p className="text-gray-400 text-xs font-raleway mt-1">
                                     To <span className="text-lapis font-semibold">{req.committee_name}</span>
                                 </p>
                                 <div className="mt-3 flex items-end justify-between">
                                     <div>
                                         {isNote ? (
-                                            <p className="text-celestial text-sm font-semibold font-montserrat">Runner on the way</p>
+                                            <p className="text-celestial text-sm font-semibold font-montserrat">Note Request</p>
                                         ) : (
                                             <>
                                                 <span className="text-2xl font-bold font-montserrat text-celestial">{req.quantity}</span>

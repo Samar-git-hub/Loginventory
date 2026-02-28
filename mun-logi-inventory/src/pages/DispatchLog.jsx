@@ -110,7 +110,7 @@ export default function DispatchLog() {
               <th className="text-left px-5 py-3.5 text-lapis font-semibold text-xs uppercase tracking-wider font-montserrat">Committee</th>
               <th className="text-left px-5 py-3.5 text-lapis font-semibold text-xs uppercase tracking-wider font-montserrat">Item</th>
               <th className="text-left px-5 py-3.5 text-lapis font-semibold text-xs uppercase tracking-wider font-montserrat">Qty</th>
-              <th className="text-left px-5 py-3.5 text-lapis font-semibold text-xs uppercase tracking-wider font-montserrat">Dispatcher</th>
+              <th className="text-left px-5 py-3.5 text-lapis font-semibold text-xs uppercase tracking-wider font-montserrat">Runner</th>
               <th className="text-left px-5 py-3.5 text-lapis font-semibold text-xs uppercase tracking-wider font-montserrat">Time</th>
               <th className="w-10"></th>
             </tr>
@@ -137,11 +137,19 @@ export default function DispatchLog() {
                     </span>
                   </td>
                   <td className="px-5 py-3.5 text-gray-800 font-semibold font-montserrat text-sm">{log.committee_name ?? '—'}</td>
-                  <td className="px-5 py-3.5 text-gray-600 font-raleway text-sm">{log.item_name ?? '—'}</td>
+                  <td className="px-5 py-3.5 text-gray-600 font-raleway text-sm">
+                    {log.item_name === 'Note'
+                      ? <span className="italic text-gray-500">{log.note || '—'}</span>
+                      : (log.item_name ?? '—')
+                    }
+                  </td>
                   <td className="px-5 py-3.5">
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold font-montserrat ${qtyStyle}`}>
-                      {isReturn ? '+' : ''}{log.quantity}
-                    </span>
+                    {log.item_name === 'Note'
+                      ? <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase font-montserrat">Note</span>
+                      : <span className={`px-3 py-1 rounded-full text-xs font-semibold font-montserrat ${qtyStyle}`}>
+                        {isReturn ? '+' : ''}{log.quantity}
+                      </span>
+                    }
                   </td>
                   <td className="px-5 py-3.5 text-gray-500 font-raleway text-sm">{log.dispatcher_name ?? '—'}</td>
                   <td className="px-5 py-3.5 text-gray-400 text-xs font-raleway">{formatTime(log.dispatched_at)}</td>

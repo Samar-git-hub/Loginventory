@@ -100,7 +100,7 @@ export default function RequesterDashboard() {
         <div>
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold font-montserrat text-yale">My Requests</h1>
+                    <h1 className="text-2xl font-bold font-montserrat text-yale">Floor In-Charge Requests</h1>
                     <p className="text-gray-400 text-sm mt-1 font-raleway">Request items and track their delivery status.</p>
                 </div>
                 <button
@@ -131,12 +131,13 @@ export default function RequesterDashboard() {
                         onClick={e => e.stopPropagation()}
                     >
                         <h2 className="text-xl font-bold font-montserrat text-yale mb-1">Confirm Receipt</h2>
-                        <p className="text-gray-400 text-sm mb-5 font-raleway">
+                        <p className="text-gray-400 text-sm mb-2 font-raleway">
                             {fulfillTarget.item_name === 'Note'
                                 ? <>Confirm that this note request has been fulfilled?</>
                                 : <>Did you receive <span className="text-gray-800 font-semibold">{fulfillTarget.item_name}</span> ×{fulfillTarget.quantity}?</>
                             }
                         </p>
+                        <p className="text-amber-600 text-xs mb-5 font-raleway bg-amber-50 px-3 py-2 rounded-lg">Please confirm only if this is your request and you have received the items.</p>
                         <div className="flex gap-3">
                             <button
                                 onClick={() => fulfillRequest.mutate(fulfillTarget.id)}
@@ -162,8 +163,8 @@ export default function RequesterDashboard() {
                     const isNote = req.item_name === 'Note'
                     return (
                         <div key={req.id} className={`bg-white rounded-xl p-5 border shadow-sm ${req.status === 'dispatched' ? 'border-blue-200 border-l-4 border-l-celestial' :
-                                req.status === 'requested' ? 'border-amber-200 border-l-4 border-l-amber-400' :
-                                    'border-gray-100 border-l-4 border-l-emerald-400'
+                            req.status === 'requested' ? 'border-amber-200 border-l-4 border-l-amber-400' :
+                                'border-gray-100 border-l-4 border-l-emerald-400'
                             }`}>
                             <div className="flex items-start justify-between gap-3">
                                 <div className="flex-1">
@@ -190,9 +191,9 @@ export default function RequesterDashboard() {
                                 {req.status === 'dispatched' && (
                                     <button
                                         onClick={() => setFulfillTarget(req)}
-                                        className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-semibold font-montserrat transition-colors shrink-0"
+                                        className="bg-amber-100 hover:bg-amber-200 text-amber-700 px-4 py-2 rounded-lg text-xs font-semibold font-montserrat transition-colors shrink-0"
                                     >
-                                        Received
+                                        Confirm Receipt
                                     </button>
                                 )}
                             </div>

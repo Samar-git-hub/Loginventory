@@ -98,7 +98,7 @@ export default function Navbar({ onNavigate }) {
           ) : (
             <>
               <Link to="/" className={linkClass('/')} onClick={handleLinkClick}>
-                My Requests
+                Requests
               </Link>
               <Link to="/inventory" className={linkClass('/inventory')} onClick={handleLinkClick}>
                 Inventory

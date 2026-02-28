@@ -154,7 +154,7 @@ export default function Requests() {
                             <th className="text-left px-5 py-3.5 text-lapis font-semibold text-xs uppercase tracking-wider font-montserrat">Qty</th>
                             <th className="text-left px-5 py-3.5 text-lapis font-semibold text-xs uppercase tracking-wider font-montserrat">Requester</th>
                             <th className="text-left px-5 py-3.5 text-lapis font-semibold text-xs uppercase tracking-wider font-montserrat">Time</th>
-                            <th className="w-28"></th>
+                            <th className="text-left px-5 py-3.5 text-lapis font-semibold text-xs uppercase tracking-wider font-montserrat">Runner</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -176,7 +176,7 @@ export default function Requests() {
                                 </td>
                                 <td className="px-5 py-3.5 text-gray-500 font-raleway text-sm">{req.requester_name ?? '—'}</td>
                                 <td className="px-5 py-3.5 text-gray-400 text-xs font-raleway">{formatTime(req.created_at)}</td>
-                                <td className="px-3 py-3.5">
+                                <td className="px-5 py-3.5">
                                     {req.status === 'requested' && (
                                         <button
                                             onClick={() => setDispatchTarget(req)}
