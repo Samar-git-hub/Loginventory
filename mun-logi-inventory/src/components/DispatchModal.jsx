@@ -51,10 +51,10 @@ export default function DispatchModal({ item, committeeName, mode = 'dispatch', 
         />
 
         {/* Quantity selector */}
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center border border-lapis/20 rounded-xl overflow-hidden mb-6">
           <button
             onClick={() => setQuantity(q => Math.max(1, q - 1))}
-            className="w-11 h-11 bg-gray-100 hover:bg-gray-200 text-gray-600 text-lg rounded-lg font-bold transition-colors flex items-center justify-center"
+            className="w-12 h-12 bg-lapis/5 hover:bg-lapis/15 text-lapis text-xl font-medium transition-colors flex items-center justify-center border-r border-lapis/20"
           >
             −
           </button>
@@ -63,11 +63,11 @@ export default function DispatchModal({ item, committeeName, mode = 'dispatch', 
             min={1}
             value={quantity}
             onChange={e => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-            className="flex-1 bg-gray-50 border border-gray-200 text-gray-800 text-center text-xl font-bold font-montserrat py-2.5 rounded-lg outline-none focus:border-celestial focus:ring-2 focus:ring-maya/30"
+            className="flex-1 bg-white text-yale text-center text-xl font-bold font-montserrat py-2.5 outline-none"
           />
           <button
             onClick={() => setQuantity(q => q + 1)}
-            className="w-11 h-11 bg-gray-100 hover:bg-gray-200 text-gray-600 text-lg rounded-lg font-bold transition-colors flex items-center justify-center"
+            className="w-12 h-12 bg-lapis/5 hover:bg-lapis/15 text-lapis text-xl font-medium transition-colors flex items-center justify-center border-l border-lapis/20"
           >
             +
           </button>

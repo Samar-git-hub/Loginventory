@@ -22,21 +22,24 @@ export default function RequesterDashboard() {
     })
 
     const createRequest = useMutation({
-        mutationFn: async ({ committeeId, itemId, quantity, requesterName, note }) => {
-            // Get committee and item names for denormalization
-            const [cRes, iRes] = await Promise.all([
-                supabase.from('committees').select('name').eq('id', committeeId).single(),
-                supabase.from('items').select('name').eq('id', itemId).single()
-            ])
+        mutationFn: async ({ committeeId, itemId, quantity, requesterName, note, isNoteOnly }) => {
+            const { data: cData } = await supabase.from('committees').select('name').eq('id', committeeId).single()
+
+            let itemName = null
+            if (!isNoteOnly && itemId) {
+                const { data: iData } = await supabase.from('items').select('name').eq('id', itemId).single()
+                itemName = iData?.name
+            }
+
             const { error } = await supabase.from('requests').insert({
                 committee_id: committeeId,
-                item_id: itemId,
-                quantity,
+                item_id: isNoteOnly ? null : itemId,
+                quantity: isNoteOnly ? 0 : quantity,
                 requester_name: requesterName,
                 note: note || null,
                 status: 'requested',
-                item_name: iRes.data?.name,
-                committee_name: cRes.data?.name
+                item_name: isNoteOnly ? 'Note' : itemName,
+                committee_name: cData?.name
             })
             if (error) throw error
         },
@@ -129,7 +132,10 @@ export default function RequesterDashboard() {
                     >
                         <h2 className="text-xl font-bold font-montserrat text-yale mb-1">Confirm Receipt</h2>
                         <p className="text-gray-400 text-sm mb-5 font-raleway">
-                            Did you receive <span className="text-gray-800 font-semibold">{fulfillTarget.item_name}</span> ×{fulfillTarget.quantity}?
+                            {fulfillTarget.item_name === 'Note'
+                                ? <>Confirm that this note request has been fulfilled?</>
+                                : <>Did you receive <span className="text-gray-800 font-semibold">{fulfillTarget.item_name}</span> ×{fulfillTarget.quantity}?</>
+                            }
                         </p>
                         <div className="flex gap-3">
                             <button
@@ -150,50 +156,55 @@ export default function RequesterDashboard() {
                 </div>
             )}
 
-            {/* Requests list — mobile-friendly cards */}
+            {/* Requests list */}
             <div className="space-y-3">
-                {requests?.map(req => (
-                    <div key={req.id} className={`bg-white rounded-xl p-5 border shadow-sm ${req.status === 'dispatched' ? 'border-blue-200 border-l-4 border-l-celestial' :
-                        req.status === 'requested' ? 'border-amber-200 border-l-4 border-l-amber-400' :
-                            'border-gray-100 border-l-4 border-l-emerald-400'
-                        }`}>
-                        <div className="flex items-start justify-between gap-3">
-                            <div className="flex-1">
-                                <div className="flex items-center gap-2 flex-wrap mb-1">
-                                    {statusPill(req.status)}
-                                    <span className="text-gray-400 text-xs font-raleway">{formatTime(req.created_at)}</span>
+                {requests?.map(req => {
+                    const isNote = req.item_name === 'Note'
+                    return (
+                        <div key={req.id} className={`bg-white rounded-xl p-5 border shadow-sm ${req.status === 'dispatched' ? 'border-blue-200 border-l-4 border-l-celestial' :
+                                req.status === 'requested' ? 'border-amber-200 border-l-4 border-l-amber-400' :
+                                    'border-gray-100 border-l-4 border-l-emerald-400'
+                            }`}>
+                            <div className="flex items-start justify-between gap-3">
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                                        {statusPill(req.status)}
+                                        {isNote && <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase font-montserrat">Note</span>}
+                                        <span className="text-gray-400 text-xs font-raleway">{formatTime(req.created_at)}</span>
+                                    </div>
+                                    {isNote ? (
+                                        <p className="text-gray-800 font-medium text-sm font-raleway mt-1">{req.note}</p>
+                                    ) : (
+                                        <>
+                                            <p className="text-gray-800 font-semibold text-sm font-montserrat">
+                                                {req.item_name} <span className="text-lapis">×{req.quantity}</span>
+                                            </p>
+                                            {req.note && <p className="text-gray-400 text-xs font-raleway mt-1 italic">{req.note}</p>}
+                                        </>
+                                    )}
+                                    <p className="text-gray-400 text-xs font-raleway mt-0.5">
+                                        To {req.committee_name}
+                                        {req.dispatcher_name && <span> — Runner: <span className="text-gray-600 font-semibold">{req.dispatcher_name}</span></span>}
+                                    </p>
                                 </div>
-                                <p className="text-gray-800 font-semibold text-sm font-montserrat">
-                                    {req.item_name} <span className="text-lapis">×{req.quantity}</span>
-                                </p>
-                                <p className="text-gray-400 text-xs font-raleway mt-0.5">
-                                    To {req.committee_name}
-                                    {req.dispatcher_name && <span> — Runner: <span className="text-gray-600 font-semibold">{req.dispatcher_name}</span></span>}
-                                </p>
-                                {req.note && <p className="text-gray-300 text-xs font-raleway mt-1 italic">{req.note}</p>}
-                            </div>
-                            {
-                                req.status === 'dispatched' && (
+                                {req.status === 'dispatched' && (
                                     <button
                                         onClick={() => setFulfillTarget(req)}
                                         className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-semibold font-montserrat transition-colors shrink-0"
                                     >
                                         Received
                                     </button>
-                                )
-                            }
-                        </div>
-                    </div>
-                ))
-                }
-                {
-                    requests?.length === 0 && (
-                        <div className="bg-white rounded-2xl shadow-sm p-12 text-center">
-                            <p className="text-gray-400 font-raleway">No requests yet. Tap "New Request" to get started.</p>
+                                )}
+                            </div>
                         </div>
                     )
-                }
-            </div >
-        </div >
+                })}
+                {requests?.length === 0 && (
+                    <div className="bg-white rounded-2xl shadow-sm p-12 text-center">
+                        <p className="text-gray-400 font-raleway">No requests yet. Tap "New Request" to get started.</p>
+                    </div>
+                )}
+            </div>
+        </div>
     )
 }

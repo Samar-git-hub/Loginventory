@@ -11,7 +11,6 @@ export default function Navbar({ onNavigate }) {
   const [showDeleteAccount, setShowDeleteAccount] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
-  // Committees — only for admin
   const { data: committees } = useQuery({
     queryKey: ['committees'],
     queryFn: async () => {
@@ -25,7 +24,6 @@ export default function Navbar({ onNavigate }) {
     enabled: role === 'admin'
   })
 
-  // Pending request count
   const { data: pendingCount } = useQuery({
     queryKey: ['pending_requests_count'],
     queryFn: async () => {
@@ -66,94 +64,107 @@ export default function Navbar({ onNavigate }) {
   }
 
   return (
-    <nav className="w-60 h-full bg-gradient-to-b from-yale to-yale2 flex flex-col p-4 gap-1 shrink-0">
-      {/* Header */}
-      <div className="mb-6 px-2 pt-2">
-        <h1 className="text-lg font-bold text-white font-montserrat">Logi Inventory</h1>
-        <p className="text-maya/60 text-xs mt-0.5 font-raleway">
-          {role === 'admin' ? 'Admin Panel' : 'Requester Panel'}
-        </p>
+    <nav className="w-60 h-full bg-gradient-to-b from-yale to-yale2 flex flex-col shrink-0">
+      {/* Top section: header + main nav (fixed) */}
+      <div className="p-4 pb-0">
+        <div className="mb-6 px-2 pt-2">
+          <h1 className="text-lg font-bold text-white font-montserrat">Logi Inventory</h1>
+          <p className="text-maya/60 text-xs mt-0.5 font-raleway">
+            {role === 'admin' ? 'Admin Panel' : 'Requester Panel'}
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          {role === 'admin' ? (
+            <>
+              <Link to="/" className={linkClass('/')} onClick={handleLinkClick}>
+                Main Inventory
+              </Link>
+              <Link to="/requests" className={linkClass('/requests')} onClick={handleLinkClick}>
+                <span>Requests</span>
+                {pendingCount > 0 && (
+                  <span className="bg-white/90 text-yale text-[10px] font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
+                    {pendingCount}
+                  </span>
+                )}
+              </Link>
+              <Link to="/transit" className={linkClass('/transit')} onClick={handleLinkClick}>
+                Transit
+              </Link>
+              <Link to="/log" className={linkClass('/log')} onClick={handleLinkClick}>
+                Activity Log
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link to="/" className={linkClass('/')} onClick={handleLinkClick}>
+                My Requests
+              </Link>
+              <Link to="/inventory" className={linkClass('/inventory')} onClick={handleLinkClick}>
+                Inventory
+              </Link>
+              <Link to="/transit" className={linkClass('/transit')} onClick={handleLinkClick}>
+                Transit
+              </Link>
+            </>
+          )}
+        </div>
       </div>
 
-      {role === 'admin' ? (
-        <>
-          {/* Admin navigation */}
-          <Link to="/" className={linkClass('/')} onClick={handleLinkClick}>
-            Main Inventory
-          </Link>
-          <Link to="/requests" className={linkClass('/requests')} onClick={handleLinkClick}>
-            <span>Requests</span>
-            {pendingCount > 0 && (
-              <span className="bg-amber-400 text-yale text-[10px] font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
-                {pendingCount}
-              </span>
-            )}
-          </Link>
-          <Link to="/transit" className={linkClass('/transit')} onClick={handleLinkClick}>
-            Transit
-          </Link>
-          <Link to="/log" className={linkClass('/log')} onClick={handleLinkClick}>
-            Activity Log
-          </Link>
-
-          {/* Committees */}
-          <div className="mt-5 mb-2 px-2">
+      {/* Middle section: committees (scrollable) — admin only */}
+      {role === 'admin' && (
+        <div className="flex-1 overflow-y-auto min-h-0 px-4 py-2">
+          <div className="mb-2 px-2 pt-2">
             <p className="text-maya/50 text-[10px] font-semibold uppercase tracking-widest font-montserrat">
               Committees
             </p>
           </div>
-          {committees?.map(c => (
-            <Link
-              key={c.id}
-              to={`/committee/${c.id}`}
-              className={linkClass(`/committee/${c.id}`)}
-              onClick={handleLinkClick}
-            >
-              {c.name}
-            </Link>
-          ))}
-          {committees?.length === 0 && (
-            <p className="text-water/40 text-xs px-4 font-raleway">No committees yet.</p>
-          )}
-        </>
-      ) : (
-        <>
-          {/* Requester navigation */}
-          <Link to="/" className={linkClass('/')} onClick={handleLinkClick}>
-            My Requests
-          </Link>
-          <Link to="/inventory" className={linkClass('/inventory')} onClick={handleLinkClick}>
-            Inventory
-          </Link>
-          <Link to="/transit" className={linkClass('/transit')} onClick={handleLinkClick}>
-            Transit
-          </Link>
-        </>
+          <div className="flex flex-col gap-1">
+            {committees?.map(c => (
+              <Link
+                key={c.id}
+                to={`/committee/${c.id}`}
+                className={linkClass(`/committee/${c.id}`)}
+                onClick={handleLinkClick}
+              >
+                {c.name}
+              </Link>
+            ))}
+            {committees?.length === 0 && (
+              <p className="text-water/40 text-xs px-4 font-raleway">No committees yet.</p>
+            )}
+          </div>
+        </div>
       )}
 
-      {/* Account section */}
-      <div className="mt-auto flex flex-col gap-1">
-        <p className="text-water/40 text-[10px] px-2 mb-1 font-raleway truncate">
+      {/* Spacer for requester (pushes bottom down) */}
+      {role !== 'admin' && <div className="flex-1" />}
+
+      {/* Bottom section: account (always visible, never pushed off) */}
+      <div className="shrink-0 p-4 pt-2 border-t border-white/10">
+        <p className="text-water/40 text-[10px] px-2 mb-2 font-raleway truncate">
           {session?.user?.email}
         </p>
-        <button
-          onClick={() => { setRole(null); if (onNavigate) onNavigate() }}
-          className="w-full text-left px-4 py-2 text-water/50 hover:text-white text-sm transition-colors rounded-lg hover:bg-white/5 font-raleway"
-        >
-          Switch Role
-        </button>
-        <button
-          onClick={handleSignOut}
-          className="w-full text-left px-4 py-2 text-water/50 hover:text-white text-sm transition-colors rounded-lg hover:bg-white/5 font-raleway"
-        >
-          Sign Out
-        </button>
-        <button
-          onClick={() => setShowDeleteAccount(true)}
-          className="w-full text-left px-4 py-2 text-water/30 hover:text-red-300 text-xs transition-colors rounded-lg hover:bg-white/5 font-raleway"
-        >
-          Delete Account
-        </button>
+        <div className="flex flex-col gap-0.5">
+          <button
+            onClick={() => { setRole(null); if (onNavigate) onNavigate() }}
+            className="w-full text-left px-4 py-2 text-water/50 hover:text-white text-sm transition-colors rounded-lg hover:bg-white/5 font-raleway"
+          >
+            Switch Role
+          </button>
+          <button
+            onClick={handleSignOut}
+            className="w-full text-left px-4 py-2 text-water/50 hover:text-white text-sm transition-colors rounded-lg hover:bg-white/5 font-raleway"
+          >
+            Sign Out
+          </button>
+          <button
+            onClick={() => setShowDeleteAccount(true)}
+            className="w-full text-left px-4 py-2 text-water/30 hover:text-red-300 text-xs transition-colors rounded-lg hover:bg-white/5 font-raleway"
+          >
+            Delete Account
+          </button>
+        </div>
       </div>
 
       {showDeleteAccount && (

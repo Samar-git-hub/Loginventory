@@ -106,8 +106,10 @@ export default function Requests() {
                     >
                         <h2 className="text-xl font-bold font-montserrat text-yale mb-1">Dispatch Runner</h2>
                         <p className="text-gray-400 text-sm mb-5 font-raleway">
-                            Sending <span className="text-gray-800 font-semibold">{dispatchTarget.item_name}</span> ×{dispatchTarget.quantity} to{' '}
-                            <span className="text-lapis font-semibold">{dispatchTarget.committee_name}</span>
+                            {dispatchTarget.item_name === 'Note'
+                                ? <>Note request to <span className="text-lapis font-semibold">{dispatchTarget.committee_name}</span>: <span className="text-gray-800 font-medium italic">"{dispatchTarget.note}"</span></>
+                                : <>Sending <span className="text-gray-800 font-semibold">{dispatchTarget.item_name}</span> ×{dispatchTarget.quantity} to <span className="text-lapis font-semibold">{dispatchTarget.committee_name}</span></>
+                            }
                         </p>
                         {dispatchError && (
                             <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg mb-4 text-sm border border-red-200 font-raleway">
@@ -160,11 +162,17 @@ export default function Requests() {
                             <tr key={req.id} className={`border-b border-gray-50 transition-colors ${req.status === 'requested' ? 'bg-amber-50/40' : 'hover:bg-water/20'}`}>
                                 <td className="px-5 py-3.5">{statusPill(req.status)}</td>
                                 <td className="px-5 py-3.5 text-gray-800 font-semibold font-montserrat text-sm">{req.committee_name ?? '—'}</td>
-                                <td className="px-5 py-3.5 text-gray-600 font-raleway text-sm">{req.item_name ?? '—'}</td>
+                                <td className="px-5 py-3.5 text-gray-600 font-raleway text-sm">
+                                    {req.item_name === 'Note'
+                                        ? <span className="italic text-gray-500">{req.note || '—'}</span>
+                                        : (req.item_name ?? '—')
+                                    }
+                                </td>
                                 <td className="px-5 py-3.5">
-                                    <span className="bg-lapis/10 text-lapis px-3 py-1 rounded-full text-xs font-semibold font-montserrat">
-                                        {req.quantity}
-                                    </span>
+                                    {req.item_name === 'Note'
+                                        ? <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase font-montserrat">Note</span>
+                                        : <span className="bg-lapis/10 text-lapis px-3 py-1 rounded-full text-xs font-semibold font-montserrat">{req.quantity}</span>
+                                    }
                                 </td>
                                 <td className="px-5 py-3.5 text-gray-500 font-raleway text-sm">{req.requester_name ?? '—'}</td>
                                 <td className="px-5 py-3.5 text-gray-400 text-xs font-raleway">{formatTime(req.created_at)}</td>
